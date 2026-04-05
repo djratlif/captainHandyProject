@@ -1,0 +1,3 @@
+Generating image for prompt: 'A simple minimalist black and white line drawing, uncolored, sketch style. CaptainHandy is flying through the sky with a big smile, holding a giant pizza. Clean black lines on white background.'
+Image generated! Downloading from: https://replicate.delivery/xezq/cIYAx60R4qZrMh6LwqRsD1fIaqzT40qdnDoW6eRBYYmfXNwsA/out-0.webp
+Saved successfully to test_comic_panel.png

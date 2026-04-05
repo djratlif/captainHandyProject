@@ -1,0 +1,3 @@
+Generating image for prompt: 'A simple minimalist black and white line drawing, uncolored, sketch style. CaptainHandy is sitting cross-legged on the floor, intensely playing a video game with a controller. Clean black lines on white background.'
+Image generated! Downloading from: https://replicate.delivery/xezq/h5JUBTeq6v3kT6ilVfpahTjOheiSoxETjRypcfM2TIXY6agZB/out-0.webp
+Saved successfully to test_comic_panel_2.png

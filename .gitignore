@@ -1,0 +1,19 @@
+# Virtual Environments
+venv/
+env/
+.env
+
+# MacOS
+.DS_Store
+
+# Replicate / Project Files
+trainImgs.zip
+*.webp
+*.png
+*.jpg
+*.jpeg
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
