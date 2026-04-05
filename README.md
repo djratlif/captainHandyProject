@@ -1,4 +1,5 @@
 # CaptainHandy Comic Generator
+# By Drew Ratliff
 
 This project contains the training and inference pipeline designed to generate a daily comic for the character **CaptainHandy**. 
 
