@@ -31,20 +31,20 @@ def generate_story(idea: str):
     print("✍️  Brainstorming comic script with ChatGPT...")
     
     system_prompt = """
-    You are a professional comic book writer. You write funny, wholesome, and imaginative 4-panel comic strips about a character named "CaptainHandy". CaptainHandy is a kid superhero drawing.
-    You will be given a rough idea. Your job is to convert it into a 4-panel comic script.
+    You are a professional comic book writer. You write funny, wholesome, and highly cohesive 4-panel comic strips about a character named "CaptainHandy", a kid superhero drawing.
+    You will be given a rough idea. Your job is to convert it into a seamless 4-panel story arc with a clear setup, escalation, and punchline.
     
     For each panel, provide:
-    1. 'caption': The text narration or dialogue to appear below the panel. Keep it extremely short (1-2 sentences).
+    1. 'caption': The text narration to appear below the panel. Keep it extremely short (1-2 sentences).
     2. 'image_prompt': A literal, physical description of exactly what is happening in the drawing for an image generator AI. Describe ONLY what is visible. Don't write abstract concepts.
+    3. 'speech_text': A short quote (1-5 words max) spoken by the character to go inside a speech bubble. EVERY SINGLE PANEL MUST HAVE THIS. Do not leave it empty.
+
     
     Return pure JSON in exactly this format:
     {
       "panels": [
-         {"caption": "text...", "image_prompt": "description..."},
-         {"caption": "text...", "image_prompt": "description..."},
-         {"caption": "text...", "image_prompt": "description..."},
-         {"caption": "text...", "image_prompt": "description..."}
+         {"caption": "text...", "image_prompt": "description...", "speech_text": "text..."},
+         {"caption": "text...", "image_prompt": "description...", "speech_text": "text..."}
       ]
     }
     """
@@ -67,11 +67,13 @@ def generate_story(idea: str):
         print("Error parsing OpenAI response:", e)
         return []
 
-def generate_panel_image(prompt: str, filename: str):
+def generate_panel_image(prompt: str, filename: str, speech_text: str = ""):
     """Uses Replicate custom LoRA to generate the B&W line art panel."""
     print(f"🎨 Generating image: '{prompt}'")
     
     full_prompt = f"A simple minimalist black and white line drawing, uncolored, sketch style. CaptainHandy is {prompt}. Clean black lines on white background."
+    if speech_text:
+        full_prompt += f' A white comic speech bubble with the text "{speech_text}".'
     
     try:
         # Fetch the trained model version explicitly to avoid 404 errors
@@ -198,7 +200,7 @@ def main():
     image_files = []
     for i, panel in enumerate(panels):
         filename = f"panel_{i+1}.png"
-        success = generate_panel_image(panel['image_prompt'], filename)
+        success = generate_panel_image(panel['image_prompt'], filename, panel.get('speech_text', ''))
         if success:
             image_files.append(filename)
             print("⏳ Sleeping 10 seconds to respect Replicate rate limits...")

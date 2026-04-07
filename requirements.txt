@@ -1,0 +1,7 @@
+flask
+openai
+replicate
+python-dotenv
+requests
+gunicorn
+werkzeug

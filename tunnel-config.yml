@@ -1,0 +1,6 @@
+tunnel: 0ec5f94c-8459-4945-b95f-3f596868aca6
+credentials-file: /Users/drewratliff/.cloudflared/0ec5f94c-8459-4945-b95f-3f596868aca6.json
+ingress:
+  - hostname: captainhandy.drew-ratliff.com
+    service: http://127.0.0.1:3000
+  - service: http_status:404
