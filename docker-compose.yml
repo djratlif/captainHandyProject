@@ -8,6 +8,12 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3000/')" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
 
   tunnel:
     image: cloudflare/cloudflared:latest
@@ -15,5 +21,6 @@ services:
     volumes:
       - ~/.cloudflared/0ec5f94c-8459-4945-b95f-3f596868aca6.json:/etc/cloudflared/creds.json:ro
     depends_on:
-      - web
+      web:
+        condition: service_healthy
     restart: unless-stopped
