@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CaptainHandy Gallery</title>
+    <link rel="stylesheet" href="{{ url_for('send_static', path='style.css') }}">
+</head>
+
+<body>
+
+    <div class="container gallery-container">
+        <header class="app-header"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1 style="margin: 0;">📚 Comic Catalog</h1>
+            <div>
+                <a href="/" class="button" style="text-decoration: none; margin-right: 1rem; color: white;">← Back to
+                    Studio</a>
+                <a href="/logout" class="button"
+                    style="text-decoration: none; background: #dc3545; color: white;">Logout</a>
+            </div>
+        </header>
+
+        {% if comics %}
+        <div class="comics-list">
+            {% for comic_id, comic in comics.items() %}
+            <div class="comic-entry"
+                style="background: white; padding: 2rem; border-radius: 12px; margin-bottom: 3rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative;">
+                <script type="application/json" class="comic-data">{{ comic.panels | tojson }}</script>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; color: #333; font-size: 1.5rem;">Idea: <span style="font-weight: normal;">{{
+                            comic.idea }}</span></h3>
+                    <button onclick="openReader(this)" style="padding: 0.8rem 1.5rem; font-size: 1rem;">📖 Read
+                        Comic</button>
+                </div>
+
+                <div class="comic-strip"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                    {% for panel in comic.panels %}
+                    <div class="gallery-panel" style="display: flex; flex-direction: column; height: 100%;">
+                        {% if panel.image_url %}
+                        <img src="{{ panel.image_url }}" alt="Panel Image"
+                            style="width: 100%; border-radius: 8px; border: 2px solid #eee;">
+                        {% else %}
+                        <div
+                            style="background: #f8f9fa; border: 2px dashed #ccc; border-radius: 8px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; color: #888;">
+                            <span>Unfinished Panel</span>
+                        </div>
+                        {% endif %}
+                        <div class="caption-container" style="flex-grow: 1; margin-top: 0.5rem;">
+                            <p style="font-size: 0.9rem; color: #444; line-height: 1.4; margin: 0;">{{ panel.caption }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 4rem; background: rgba(255,255,255,0.8); border-radius: 12px;">
+            <h2>No comics yet!</h2>
+            <p>Go to the studio to generate your first adventure.</p>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- Reader Overlay Modal -->
+    <div id="gallery-reader-overlay" class="screen"
+        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 1000; display: none; align-items: center; justify-content: center; flex-direction: column;">
+        <button onclick="closeReader()"
+            style="position: absolute; top: 2rem; right: 2rem; background: rgba(255,255,255,0.1); border: 2px solid white; color: white;">Close
+            X</button>
+
+        <div class="reader-container" style="max-width: 1000px; width: 90%;">
+            <button id="gal-prev-btn" class="nav-btn hidden" onclick="galPrev()">&larr;</button>
+            <div class="panel-viewer glass-panel" style="background: rgba(40, 40, 40, 0.9);">
+                <div class="img-container">
+                    <img id="gal-current-img" src="" alt="Comic Panel" />
+                </div>
+                <div class="caption-container" style="color: white;">
+                    <p id="gal-current-caption"></p>
+                </div>
+            </div>
+            <button id="gal-next-btn" class="nav-btn" onclick="galNext()">&rarr;</button>
+        </div>
+    </div>
+
+    <style>
+        #gallery-reader-overlay.active {
+            display: flex !important;
+        }
+    </style>
+
+    <script>
+        let currentGalPanels = [];
+        let currentGalIdx = 0;
+
+        function openReader(btn) {
+            const entry = btn.closest('.comic-entry');
+            const dataNode = entry.querySelector('.comic-data');
+            if (!dataNode) return;
+
+            currentGalPanels = JSON.parse(dataNode.textContent);
+            currentGalIdx = 0;
+
+            document.getElementById('gallery-reader-overlay').classList.add('active');
+            renderGal();
+        }
+
+        function closeReader() {
+            document.getElementById('gallery-reader-overlay').classList.remove('active');
+        }
+
+        function renderGal() {
+            if (!currentGalPanels || currentGalPanels.length === 0) return;
+
+            const panel = currentGalPanels[currentGalIdx];
+            const imgEl = document.getElementById('gal-current-img');
+
+            if (panel.image_url) {
+                imgEl.src = panel.image_url;
+                imgEl.style.display = 'block';
+            } else {
+                imgEl.style.display = 'none';
+            }
+
+            document.getElementById('gal-current-caption').innerText = panel.caption || "Unfinished Panel...";
+
+            document.getElementById('gal-prev-btn').classList.toggle('hidden', currentGalIdx === 0);
+            document.getElementById('gal-next-btn').classList.toggle('hidden', currentGalIdx === currentGalPanels.length - 1);
+        }
+
+        function galNext() {
+            if (currentGalIdx < currentGalPanels.length - 1) {
+                currentGalIdx++;
+                renderGal();
+            }
+        }
+
+        function galPrev() {
+            if (currentGalIdx > 0) {
+                currentGalIdx--;
+                renderGal();
+            }
+        }
+    </script>
+
+</body>
+
+</html>

@@ -16,15 +16,42 @@ body {
     overflow-x: hidden;
 }
 
-.text-center { text-align: center; }
-.mt-4 { margin-top: 1rem; }
-.mt-6 { margin-top: 1.5rem; }
-.mt-8 { margin-top: 2rem; }
-.mb-4 { margin-bottom: 1rem; }
-.text-sm { font-size: 0.9rem; }
-.text-gray { color: #a0a5b5; }
-.flex-col { display: flex; flex-direction: column; }
-.items-center { align-items: center; }
+.text-center {
+    text-align: center;
+}
+
+.mt-4 {
+    margin-top: 1rem;
+}
+
+.mt-6 {
+    margin-top: 1.5rem;
+}
+
+.mt-8 {
+    margin-top: 2rem;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+.text-sm {
+    font-size: 0.9rem;
+}
+
+.text-gray {
+    color: #a0a5b5;
+}
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.items-center {
+    align-items: center;
+}
 
 /* SCREENS */
 #app {
@@ -33,7 +60,10 @@ body {
     padding: 2rem;
     position: relative;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 100vh;
 }
 
 .screen {
@@ -163,8 +193,13 @@ button:active {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* READER SCREEN */
@@ -200,7 +235,8 @@ button:active {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    mix-blend-mode: multiply; /* Helps line art pop nicely against white */
+    mix-blend-mode: multiply;
+    /* Helps line art pop nicely against white */
 }
 
 .caption-container {

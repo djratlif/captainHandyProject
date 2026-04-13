@@ -34,8 +34,24 @@ client = OpenAI(api_key=OPENAI_KEY)
 MODEL_OWNER = "djratlif"
 MODEL_NAME = "captainhandy-comic"
 
-# In-memory store for generated panels
-comics_db = {}
+# Persistent JSON store for generated panels
+DB_PATH = os.path.join('app_data', 'database.json')
+
+def load_db():
+    if os.path.exists(DB_PATH):
+        with open(DB_PATH, 'r') as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                pass
+    return {}
+
+def save_db(db):
+    os.makedirs('app_data', exist_ok=True)
+    with open(DB_PATH, 'w') as f:
+        json.dump(db, f, indent=2)
+
+comics_db = load_db()
 
 def get_latest_version():
     """Dynamically fetches the latest model version hash"""
@@ -67,6 +83,11 @@ def logout():
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/gallery')
+def gallery():
+    # Only show comics that have an idea (basic filtering)
+    return render_template('gallery.html', comics=comics_db)
 
 @app.route('/static/<path:path>')
 def send_static(path):
@@ -116,6 +137,7 @@ def brainstorm():
             "idea": idea,
             "panels": panels
         }
+        save_db(comics_db)
         
         return jsonify({"comic_id": comic_id, "panels": panels})
         
@@ -166,6 +188,7 @@ def generate_panel(comic_id, panel_idx):
                 f.write(resp.content)
                 
             panel["image_url"] = f"/{filepath}"
+            save_db(comics_db)
             return jsonify({"success": True, "image_url": f"/{filepath}"})
         else:
             return jsonify({"error": "Invalid output from Replicate"}), 500

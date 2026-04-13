@@ -5,6 +5,7 @@ services:
     build: .
     volumes:
       - ./static/comics:/app/static/comics
+      - ./app_data:/app/app_data
     env_file:
       - .env
     restart: unless-stopped
