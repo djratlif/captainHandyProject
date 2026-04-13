@@ -2,6 +2,8 @@ flask
 openai
 replicate
 python-dotenv
+google-cloud-storage
+google-cloud-firestore
 requests
 gunicorn
 werkzeug

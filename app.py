@@ -8,6 +8,23 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 
+# Cloud Run Stateless Dependencies
+try:
+    from google.cloud import firestore
+    from google.cloud import storage
+    CLOUD_MODE = True
+    GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "captainhandy-comics-storage")
+    
+    # By default, GCP looks for `(default)`. The user named it `default`.
+    FIRESTORE_DB_ID = os.environ.get("FIRESTORE_DB_ID", "default")
+    db_client = firestore.Client(database=FIRESTORE_DB_ID)
+    
+    storage_client = storage.Client()
+    print("☁️ RUNNING IN GOOGLE CLOUD MODE: Firestore and GCS enabled.")
+except Exception as e:
+    CLOUD_MODE = False
+    print(f"💾 RUNNING IN LOCAL MODE (Cloud credentials missing or unconfigured): {e}")
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -38,6 +55,18 @@ MODEL_NAME = "captainhandy-comic"
 DB_PATH = os.path.join('app_data', 'database.json')
 
 def load_db():
+    if CLOUD_MODE:
+        try:
+            docs = db_client.collection('comics').stream()
+            db = {}
+            for doc in docs:
+                db[doc.id] = doc.to_dict()
+            return db
+        except Exception as e:
+            print(f"Error loading from Firestore: {e}")
+            return {}
+            
+    # Local fallback
     if os.path.exists(DB_PATH):
         with open(DB_PATH, 'r') as f:
             try:
@@ -46,10 +75,19 @@ def load_db():
                 pass
     return {}
 
-def save_db(db):
+def save_comic(comic_id, comic_data):
+    if CLOUD_MODE:
+        try:
+            db_client.collection('comics').document(comic_id).set(comic_data)
+        except Exception as e:
+            print(f"Error saving to Firestore: {e}")
+        return
+        
+    # Local fallback
+    comics_db[comic_id] = comic_data
     os.makedirs('app_data', exist_ok=True)
     with open(DB_PATH, 'w') as f:
-        json.dump(db, f, indent=2)
+        json.dump(comics_db, f, indent=2)
 
 comics_db = load_db()
 
@@ -86,8 +124,9 @@ def index():
 
 @app.route('/gallery')
 def gallery():
-    # Only show comics that have an idea (basic filtering)
-    return render_template('gallery.html', comics=comics_db)
+    # If in cloud mode, fetch fresh from DB to prevent stale instances
+    current_db = load_db() if CLOUD_MODE else comics_db
+    return render_template('gallery.html', comics=current_db)
 
 @app.route('/static/<path:path>')
 def send_static(path):
@@ -133,11 +172,16 @@ def brainstorm():
         panels = json.loads(script_content).get("panels", [])
         
         comic_id = str(uuid.uuid4())
-        comics_db[comic_id] = {
+        comic_data = {
             "idea": idea,
             "panels": panels
         }
-        save_db(comics_db)
+        
+        # Only assign memory if local, otherwise let load_db() fetch
+        if not CLOUD_MODE:
+            comics_db[comic_id] = comic_data
+            
+        save_comic(comic_id, comic_data)
         
         return jsonify({"comic_id": comic_id, "panels": panels})
         
@@ -146,10 +190,12 @@ def brainstorm():
 
 @app.route('/api/generate_panel/<comic_id>/<int:panel_idx>', methods=['POST'])
 def generate_panel(comic_id, panel_idx):
-    if comic_id not in comics_db:
+    current_db = load_db() if CLOUD_MODE else comics_db
+    
+    if comic_id not in current_db:
         return jsonify({"error": "Comic ID not found"}), 404
         
-    panels = comics_db[comic_id]["panels"]
+    panels = current_db[comic_id]["panels"]
     if panel_idx < 0 or panel_idx >= len(panels):
         return jsonify({"error": "Invalid panel index"}), 400
         
@@ -182,14 +228,29 @@ def generate_panel(comic_id, panel_idx):
             image_url = output[0]
             resp = requests.get(image_url)
             filename = f"{comic_id}_{panel_idx}.png"
-            filepath = os.path.join("static", "comics", filename)
             
-            with open(filepath, 'wb') as f:
-                f.write(resp.content)
+            if CLOUD_MODE:
+                try:
+                    bucket = storage_client.bucket(GCS_BUCKET_NAME)
+                    blob = bucket.blob(filename)
+                    blob.upload_from_string(resp.content, content_type='image/png')
+                    blob.make_public()
+                    final_image_url = blob.public_url
+                except Exception as e:
+                    print(f"GCS Upload Error: {e}, falling back to local storage")
+                    filepath = os.path.join("static", "comics", filename)
+                    with open(filepath, 'wb') as f:
+                        f.write(resp.content)
+                    final_image_url = f"/{filepath}"
+            else:
+                filepath = os.path.join("static", "comics", filename)
+                with open(filepath, 'wb') as f:
+                    f.write(resp.content)
+                final_image_url = f"/{filepath}"
                 
-            panel["image_url"] = f"/{filepath}"
-            save_db(comics_db)
-            return jsonify({"success": True, "image_url": f"/{filepath}"})
+            panel["image_url"] = final_image_url
+            save_comic(comic_id, current_db[comic_id])
+            return jsonify({"success": True, "image_url": final_image_url})
         else:
             return jsonify({"error": "Invalid output from Replicate"}), 500
             
