@@ -4,8 +4,11 @@ services:
   web:
     build: .
     volumes:
+      - .:/app
       - ./static/comics:/app/static/comics
       - ./app_data:/app/app_data
+    ports:
+      - "3000:3000"
     env_file:
       - .env
     restart: unless-stopped
