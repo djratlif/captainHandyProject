@@ -234,7 +234,6 @@ def generate_panel(comic_id, panel_idx):
                     bucket = storage_client.bucket(GCS_BUCKET_NAME)
                     blob = bucket.blob(filename)
                     blob.upload_from_string(resp.content, content_type='image/png')
-                    blob.make_public()
                     final_image_url = blob.public_url
                 except Exception as e:
                     print(f"GCS Upload Error: {e}, falling back to local storage")
