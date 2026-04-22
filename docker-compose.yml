@@ -18,13 +18,3 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
-
-  tunnel:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --credentials-file /etc/cloudflared/creds.json run --url http://web:3000 0ec5f94c-8459-4945-b95f-3f596868aca6
-    volumes:
-      - ~/.cloudflared/0ec5f94c-8459-4945-b95f-3f596868aca6.json:/etc/cloudflared/creds.json:ro
-    depends_on:
-      web:
-        condition: service_healthy
-    restart: unless-stopped
